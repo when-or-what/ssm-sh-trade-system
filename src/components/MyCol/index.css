@@ -1,0 +1,4 @@
+/* 修改商品卡片显示文字那部分的效果 */
+.ant-card-body {
+    padding: 0 !important;
+}

@@ -1,0 +1,52 @@
+.sign-bg-container {
+    background: url('../../assets/images/sign_bg.jpg') no-repeat center center / cover;
+    height: 100vh;
+    width: 100vw;
+    display: flow-root;
+}
+
+.sign-container {
+    width: 27vw;
+    /* height: 50vh; */
+    margin: 15vh auto;
+    border-radius: 10px;
+    border: 5px solid var(--main-color);
+}
+
+.sign-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.left-nav {
+    border-right: 1px solid var(--main-line-color);
+}
+
+.right-nav {
+    border-left: 1px solid var(--main-line-color);
+}
+
+.sign-link {
+    color: var(--main-text-color);
+    text-decoration: none;
+    padding: 2vh 4vw 2vh 4vw;
+    font-weight: 700;
+    /* border-radius: var(--main-radius); */
+    cursor: pointer;
+    width: 50%;
+    text-align: center;
+    border-bottom: 1px solid var(--main-color);
+}
+
+.active,
+.active:hover,
+.sign-link:hover {
+    color: var(--main-color);
+    border-bottom: 3px solid #edd417;
+}
+
+.sign-section {
+    width: 70%;
+    margin: 10% auto;
+}

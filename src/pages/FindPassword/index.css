@@ -1,0 +1,32 @@
+.fp-bg-container {
+    background: url('../../assets/images/sign_bg.jpg') no-repeat center center / cover;
+    height: 100vh;
+    width: 100vw;
+    display: flow-root;
+}
+
+.fp-container {
+    width: 27vw;
+    /* height: 50vh; */
+    margin: 15vh auto;
+    border-radius: 10px;
+    border: 5px solid var(--main-color);
+}
+
+.fp-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.fp-section {
+    width: 70%;
+    margin: 10% auto;
+}
+
+.fp-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 10px 0 0 0;
+    color: var(--main-color);
+}

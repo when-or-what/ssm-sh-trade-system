@@ -1,0 +1,18 @@
+.fp-form {
+    height: 100%;
+    background-color: var(--main-color-inv);
+}
+
+.fp-form-button {
+    width: 100%;
+}
+
+.site-form-item-icon {
+    color: var(--main-color);
+}
+
+.site-form-item-input {
+    margin: 2% auto;
+    border-color: var(--main-line-color);
+    border-radius: var(--main-radius);
+}
