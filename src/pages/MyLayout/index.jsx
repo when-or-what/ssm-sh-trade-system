@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import {
     HeartOutlined,
@@ -31,7 +31,7 @@ import {
 import MyCol from '../../components/MyCol';
 import UserInfo from '../../components/UserInfo';
 
-import dataProvider from '../../api/ajax';
+import dataProvider from '../../api';
 import storage from '../../utils/storage';
 
 import './index.css';
@@ -71,17 +71,17 @@ const mainBgColor = '#F7ECE4';
 const leftMenuBgColor = '#D6B199';
 
 const MyLayout = () => {
-    // 每一次加载组件时都将本地的缓存加到内存中
-    // 首先判断本地是否有用户信息
-    // 获取本地的用户信息
+    // 每一次加载组件时都将本地的用户信息缓存加到内存中
     const userInfo = storage.get(USER_INFO);
     // 提示框
     const [messageApi, contextHolder] = message.useMessage();
-
+    // 编程式路由导航
+    const navigate = useNavigate();
     // 用户信息抽屉
     const [open, setOpen] = useState(false);
     // 设置当前用户的信息
     const [info, setInfo] = useState({});
+    // 刷新抽屉，以免数据一样
     const [key, setKey] = useState('1');
     // 当前抽屉处于什么状态（展示用户信息0，修改密码1，修改邮箱2）
     const [drawerState, setDrawerState] = useState(0);
@@ -93,7 +93,12 @@ const MyLayout = () => {
         const key = e.key;
         console.log('hello', key);
         switch (key) {
+            case 'user-sign':
+                // 登录，直接跳转到登录页面即可
+                navigate('/sign-in', { replace: true });
+                break;
             case 'user-info':
+                // 用户信息
                 handleClick();
                 break;
             case 'good-info':
@@ -108,34 +113,40 @@ const MyLayout = () => {
                 setConfirmOpen(2);
                 break;
             default:
+                console.log('奇了怪了');
                 break;
         }
     };
 
     // 设置菜单的菜单项
     const dropdownMenuItems = [
-        getMenuItem('user-info', <UserOutlined />, '用户信息'),
-        userInfo && userInfo.id ? getMenuItem('good-info', <GoldOutlined />, '商品信息') : null,
-        userInfo && userInfo.id ? getMenuItem('exit', <PoweroffOutlined />, '退出登录') : null,
-        userInfo && userInfo.id ? getMenuItem('logout', <UserDeleteOutlined />, '注销用户') : null,
+        userInfo && userInfo.userId ?
+            getMenuItem('user-info', <UserOutlined />, '用户信息') :
+            getMenuItem('user-sign', <UserOutlined />, '登录'),
+        userInfo && userInfo.userId ? getMenuItem('good-info', <GoldOutlined />, '商品信息') : null,
+        userInfo && userInfo.userId ? getMenuItem('exit', <PoweroffOutlined />, '退出登录') : null,
+        userInfo && userInfo.userId ? getMenuItem('logout', <UserDeleteOutlined />, '注销用户') : null,
     ];
+    // 设置右上角下拉菜单的
     const menuProps = {
         items: dropdownMenuItems,
         onClick: handleMenuClick,
     };
+    // 显示抽屉
     const showDrawer = () => {
         setOpen(true);
         setKey('2');
         setDrawerState(0);
     };
+    // 关闭抽屉
     const onClose = () => {
         setOpen(false);
         setKey('1');
         setDrawerState(0);
     };
-    // 菜单栏
+    // 最左边的菜单栏
     const [collapsed, setCollapsed] = useState(false);
-    // 组件状态，一个对象类型，包含许多变量
+    // 中间关于商品部分的组件状态，一个对象类型，包含许多变量
     const [state, setState] = useState({
         isLoading: false,
         err: '',
@@ -143,76 +154,95 @@ const MyLayout = () => {
     });
 
     // 用户信息抽屉按钮点击事件
+    // 能点击到这个按钮，说明本地肯定是有用户信息的
     const handleClick = async () => {
-        if (userInfo && userInfo.id) {
-            try {
-                // 如果本地有用户信息，那么重新获取
-                const res = (await dataProvider.getUserById(userInfo.id)).data;
-                if (!res.state) {
-                    messageApi.error('获取用户信息时发生未知错误');
-                } else if (res.state !== OK) {
-                    messageApi.error(res.message);
-                } else {
-                    // 成功获取到了用户数据
-                    const { id, userName, userContact, userRemark, userAvatar } = res.data;
-                    const user = { id, userName, userContact, userRemark, userAvatar };
-                    // 则更新本地用户信息
-                    storage.set(USER_INFO, user);
-                    // 并且设置组件状态
-                    setInfo(user);
-                }
-            } catch (error) {
-                console.log(error);
-                messageApi.error('获取用户信息时发生未知错误');
+        // 直接重新获取即可
+        try {
+            // 如果本地有用户信息，那么重新获取
+            const res = (await dataProvider.user.getById(userInfo.userId)).data;
+            if (!res.state) {
+                messageApi.error('登录过期，请重新登录');
+                // 清除本地缓存
+                storage.remove(USER_INFO);
+                setOpen(false);
+                return;
+            } else if (res.state !== OK) {
+                messageApi.error(res.message);
+                // 清除本地缓存
+                storage.remove(USER_INFO);
+                setOpen(false);
+                return;
+            } else if (res.data === null) {
+                messageApi.error('用户不存在');
+                // 清除本地缓存
+                storage.remove(USER_INFO);
+                setOpen(false);
+                return;
+            } else {
+                // 成功获取到了用户数据
+                const { userId, userName, userContact, userRemark, userAvatar } = res.data;
+                const user = { userId, userName, userContact, userRemark, userAvatar };
+                // 则更新本地用户信息
+                storage.set(USER_INFO, user);
+                // 并且设置组件状态
+                // 目的是让用户信息组件获取到这个信息
+                setInfo(user);
             }
-        } else {
-            setInfo({});
+        } catch (error) {
+            console.log(error);
+            messageApi.error('登录过期，请重新登录');
+            // 清除本地缓存
+            storage.remove(USER_INFO);
+            setOpen(false);
+            return;
         }
+        // 然后打开抽屉
         showDrawer();
     };
 
-    // 点击菜单项的回调函数
-    const callback = (cate) => {
+    // 点击最左边商品类别菜单项的回调函数
+    const callback = async (cate) => {
         // 发送请求之前，更新状态
         setState({
             ...state,
             isLoading: true
         });
         // 发送请求
-        dataProvider.getGoods({ cate: cate })
-            .then(response => {
-                const data = response.data;
-                if (data.state !== Number.parseInt(process.env.REACT_APP_OK)) {
-                    console.log(data.message);
-                    setState({
-                        ...state,
-                        err: data.message
-                    });
-                } else {
-                    // 请求成功，展示
-                    console.log(data.data);
-                    setState({
-                        ...state,
-                        isLoading: false,
-                        goods: data.data
-                    });
-                }
-            }).catch(err => {
-                console.log(err);
+        try {
+            const res = (await dataProvider.good.getGoods({
+                goodCate: 'all',
+                pageNum: 1,
+                pageSize: 10,
+            })).data;
+            if (res.state && res.state === OK) {
+                // 请求成功，展示
+                console.log(res.data);
                 setState({
                     ...state,
-                    err: err.message
+                    isLoading: false,
+                    goods: res.data.data
                 });
+            } else {
+                // 请求未成功
+                console.log(res.message);
+                setState({
+                    ...state,
+                    err: res.message
+                });
+            }
+        } catch (error) {
+            console.log(error);
+            setState({
+                ...state,
+                err: err.message
             });
+        }
     };
 
     // 给菜单项添加回调函数
     for (let i in items) {
         items[i].onClick = () => callback(items[i].key === 'all' ? '' : items[i].key);
     }
-
-    // 在组件挂载完成后访问一次接口，以设置默认状态
-    useEffect(() => callback(''), []);
 
     const { isLoading, err, goods } = state;
 
@@ -325,7 +355,7 @@ const MyLayout = () => {
                                                 return (
                                                     <MyCol
                                                         good={goodItem}
-                                                        key={goodItem.id}
+                                                        key={goodItem.goodId}
                                                     />
                                                 );
                                             })}
@@ -369,8 +399,12 @@ const MyLayout = () => {
                 }}
             >
                 {
-                    info && info.id ? <UserInfo info={info} curState={drawerState} changeDrawerState={changeDrawerState} /> :
-                        <Link to="/sign-in">您还没有登录，去登录</Link>
+                    // 抽屉直接显示用户信息
+                    <UserInfo
+                        info={info}
+                        curState={drawerState}
+                        changeDrawerState={changeDrawerState}
+                    />
                 }
             </Drawer>
             {/* 确认对话框 */}
@@ -404,7 +438,7 @@ const ConfirmModal = ({ open, setOpen }) => {
             if (open === 2) {
                 try {
                     // 如果是注销的话还要请求接口
-                    const res = (await dataProvider.deleteUser({ id: user.id })).data;
+                    const res = (await dataProvider.deleteUser({ id: user.userId })).data;
 
                     if (!res.state) {
                         message.error('注销用户时发生未知错误');

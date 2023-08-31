@@ -11,7 +11,7 @@ import {
 import './index.css';
 
 const MyCol = ({ good }) => {
-    const { goodImgs, goodName, goodPrice, remark, id } = good;
+    const { images, goodName, goodPrice, remark, goodId } = good;
 
     return (
         <Col span={4}>
@@ -22,8 +22,8 @@ const MyCol = ({ good }) => {
                 }}
                 cover={
                     <img
-                        alt={'good' + id}
-                        src={(goodImgs === null || goodImgs.length === 0) ? './images/good.jpg' : goodImgs[0]}
+                        alt={'good' + goodId}
+                        src={'./images/good.jpg'}
                         style={{
                             width: '200px',
                             height: '180px'

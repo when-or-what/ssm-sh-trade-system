@@ -2,8 +2,6 @@ import React from 'react';
 
 import FindPasswordForm from '../../components/FindPasswordForm';
 
-import { useNavigate } from "react-router-dom";
-
 import './index.css';
 
 const FindPassword = () => {

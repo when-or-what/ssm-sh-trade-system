@@ -17,7 +17,7 @@ import {
     message
 } from 'antd';
 
-import dataProvider from '../../api/ajax';
+import dataProvider from '../../api';
 import * as formValidator from '../../utils/validate';
 import storage from '../../utils/storage';
 
@@ -47,7 +47,7 @@ const SignForm = ({ flag }) => {
             const { userName, userPswd } = values;
             // 登录，提交数据即可
             try {
-                const response = (await dataProvider.signIn({ userName, userPswd })).data;
+                const response = (await dataProvider.user.signIn({ userName, userPswd })).data;
                 if (response.state !== OK) {
                     // 登录不成功，显示错误信息
                     messageApi.open({
@@ -57,8 +57,8 @@ const SignForm = ({ flag }) => {
                 } else {
                     // 登录成功，保存个人信息在本地，然后跳到主页
                     // 保存的用户信息只需要可公开的字段即可
-                    const { id, userName, userContact, userRemark, userAvatar } = response.data;
-                    const user = { id, userName, userContact, userRemark, userAvatar };
+                    const { userId, userName, userContact, userRemark, userAvatar } = response.data;
+                    const user = { userId, userName, userContact, userRemark, userAvatar };
                     storage.set(userInfo, user);
                     navigate('/', { replace: true });
                 }
@@ -83,7 +83,7 @@ const SignForm = ({ flag }) => {
                 const { userName, userPswd, userEmail } = values;
                 // 提交数据
                 try {
-                    const response = (await dataProvider.signUp({
+                    const response = (await dataProvider.user.signUp({
                         userName, userPswd, userEmail
                     })).data;
                     if (response.state !== OK) {

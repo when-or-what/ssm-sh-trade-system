@@ -17,7 +17,7 @@ import {
     message
 } from 'antd';
 
-import dataProvider from '../../api/ajax';
+import dataProvider from '../../api';
 import * as formValidator from '../../utils/validate';
 
 const OK = Number.parseInt(process.env.REACT_APP_OK);

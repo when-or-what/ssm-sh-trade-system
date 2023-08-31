@@ -21,7 +21,7 @@ import {
 } from 'antd';
 
 import * as formValidator from '../../utils/validate';
-import dataProvider from "../../api/ajax";
+import dataProvider from "../../api";
 
 import './index.css';
 import storage from "../../utils/storage";

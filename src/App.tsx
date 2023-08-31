@@ -1,7 +1,7 @@
 import React from 'react';
 import { ConfigProvider } from 'antd';
 
-import './assets/css/global.css';
+import './assets/global.css';
 import { useRoutes } from 'react-router-dom';
 import routers from './routes';
 
