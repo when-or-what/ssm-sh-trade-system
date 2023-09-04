@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.trade.sh.mapper.GoodMapper">
+
+    <!-- 商品数据，含图片数组 -->
+    <resultMap id="GoodMap" type="good">
+        <id column="good_id" property="goodId" jdbcType="VARCHAR"/>
+        <collection property="images" ofType="image">
+            <id column="img_id" property="imgId" jdbcType="VARCHAR"/>
+        </collection>
+    </resultMap>
+
+    <resultMap id="BaseResultMap" type="com.trade.sh.entities.Good">
+        <id property="goodId" column="good_id" jdbcType="VARCHAR"/>
+        <result property="goodCate" column="good_cate" jdbcType="VARCHAR"/>
+        <result property="goodName" column="good_name" jdbcType="VARCHAR"/>
+        <result property="goodPrice" column="good_price" jdbcType="DECIMAL"/>
+        <result property="createAt" column="create_at" jdbcType="BIGINT"/>
+        <result property="viewNum" column="view_num" jdbcType="BIGINT"/>
+        <result property="remark" column="remark" jdbcType="VARCHAR"/>
+        <result property="version" column="version" jdbcType="INTEGER"/>
+        <result property="isDeleted" column="is_deleted" jdbcType="INTEGER"/>
+        <result property="userId" column="user_id" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        good_id
+        ,good_cate,good_name,
+        good_price,create_at,view_num,
+        remark,version,is_deleted,
+        user_id
+    </sql>
+
+    <!--  批量删除商品  -->
+    <update id="deleteGoods" parameterType="list">
+        UPDATE t_goods
+        SET is_deleted = 1
+        WHERE is_deleted = 0
+        AND good_id IN
+        <foreach item="item" collection="list" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </update>
+    <!-- 获取所有商品的数据 -->
+    <select id="queryAll" resultMap="GoodMap">
+        SELECT *
+        FROM t_goods tg
+                 LEFT JOIN t_images tm
+                           ON tg.good_id = tm.good_id
+        WHERE tg.is_deleted = 0
+          AND tm.is_deleted = 0
+    </select>
+    <!-- 获取单个商品的数据 -->
+    <select id="queryById" resultMap="GoodMap">
+        SELECT *
+        FROM t_goods tg
+                 LEFT JOIN t_images tm
+                           ON tg.good_id = tm.good_id
+        WHERE tg.good_id = #{goodId}
+          AND tg.is_deleted = 0
+          AND tm.is_deleted = 0;
+    </select>
+    <!--  分页查询商品  -->
+    <select id="queryByPage" resultMap="GoodMap">
+        SELECT *
+        FROM t_goods tg
+        LEFT JOIN t_images tm
+        ON tg.good_id = tm.good_id
+        WHERE tg.is_deleted = 0
+        AND tm.is_deleted = 0
+        AND good_cate = #{goodVo.goodCate}
+        <if test="goodVo.keyword != null and goodVo.keyword.length() > 0">
+            AND good_name LIKE CONCAT('%',#{goodVo.keyword},'%')
+        </if>
+        <if test="goodVo.userId != null and goodVo.userId.length() > 0">
+            AND user_id = #{goodVo.userId}
+        </if>
+        LIMIT #{offset}, #{goodVo.pageSize};
+    </select>
+    <!--  查询所有商品数  -->
+    <select id="queryAllNum" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM t_goods
+        WHERE is_deleted = 0
+        AND good_cate = #{goodVo.goodCate}
+        <if test="goodVo.keyword != null and goodVo.keyword.length() > 0">
+            AND good_name LIKE CONCAT('%',#{goodVo.keyword},'%')
+        </if>
+        <if test="goodVo.userId != null and goodVo.userId.length() > 0">
+            AND user_id = #{goodVo.userId}
+        </if>
+    </select>
+    <!--  物理删除所有已被逻辑删除的商品 -->
+    <delete id="deleteByIsDeleted">
+        DELETE
+        FROM t_goods
+        WHERE is_deleted = 1;
+    </delete>
+</mapper>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.trade.sh.mapper.UserMapper">
+
+    <resultMap id="BaseResultMap" type="com.trade.sh.entities.User">
+        <id property="userId" column="user_id" jdbcType="VARCHAR"/>
+        <result property="userName" column="user_name" jdbcType="VARCHAR"/>
+        <result property="userPswd" column="user_pswd" jdbcType="CHAR"/>
+        <result property="userEmail" column="user_email" jdbcType="VARCHAR"/>
+        <result property="userAvatar" column="user_avatar" jdbcType="VARCHAR"/>
+        <result property="userContact" column="user_contact" jdbcType="VARCHAR"/>
+        <result property="userRemark" column="user_remark" jdbcType="VARCHAR"/>
+        <result property="createAt" column="create_at" jdbcType="BIGINT"/>
+        <result property="isDisabled" column="is_disabled" jdbcType="INTEGER"/>
+        <result property="veriCode" column="veri_code" jdbcType="CHAR"/>
+        <result property="timeOut" column="time_out" jdbcType="BIGINT"/>
+        <result property="version" column="version" jdbcType="INTEGER"/>
+        <result property="isDeleted" column="is_deleted" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        user_id
+        ,user_name,user_pswd,
+        user_email,user_avatar,user_contact,
+        user_remark,create_at,is_disabled,
+        veri_code,time_out,version,
+        is_deleted
+    </sql>
+    <!--  物理删除被逻辑删除的用户  -->
+    <delete id="deleteByIsDeleted">
+        DELETE
+        FROM t_users
+        WHERE is_deleted = 1;
+    </delete>
+</mapper>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.trade.sh.mapper.ImageMapper">
+
+    <resultMap id="BaseResultMap" type="com.trade.sh.entities.Image">
+        <id property="imgId" column="img_id" jdbcType="VARCHAR"/>
+        <result property="imgName" column="img_name" jdbcType="VARCHAR"/>
+        <result property="version" column="version" jdbcType="INTEGER"/>
+        <result property="isDeleted" column="is_deleted" jdbcType="INTEGER"/>
+        <result property="goodId" column="good_id" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        img_id
+        ,img_name,good_id
+    </sql>
+    <!--  批量添加图片  -->
+    <insert id="addImages" parameterType="list">
+        INSERT INTO t_images (<include refid="Base_Column_List"/>) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.imgId}, #{item.imgName}, #{item.goodId})
+        </foreach>
+    </insert>
+    <!--  批量逻辑删除图片  -->
+    <update id="deleteImages" parameterType="list">
+        UPDATE t_images
+        SET is_deleted = 1
+        WHERE is_deleted = 0
+        AND good_id IN
+        <foreach item="item" collection="list" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </update>
+    <!--  物理删除所有被逻辑删除的图片  -->
+    <delete id="deleteByIsDeleted">
+        DELETE
+        FROM t_images
+        WHERE is_deleted = 1;
+    </delete>
+</mapper>

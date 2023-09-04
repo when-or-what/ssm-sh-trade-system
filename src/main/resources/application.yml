@@ -1,0 +1,105 @@
+server:
+  port: 9527
+  servlet:
+    context-path: /
+
+mybatis-plus:
+  # 既可以是文件夹下的文件，又可以是直接的文件
+  # Mybatis-plus默认是classpath:/mapper
+  # mapper-locations: classpath:com/trade/sh/mappers/**/*.xml
+  # mapper-locations: classpath:mapper/*.xml -> 只能是文件
+  # mapper-locations: classpath:mapper/*/*.xml -> 只能是文件夹下的文件
+  # 实体类别名
+  type-aliases-package: com.trade.sh.entities
+  configuration:
+    # 表的嵌套映射
+    auto-mapping-behavior: full
+    # 默认开启了驼峰映射
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: isDeleted
+
+spring:
+  # 德鲁伊连接池
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/db_trade?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=UTC&allowMultiQueries=true
+    # url: jdbc:mysql://47.108.239.237:3306/db_trade?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=UTC&allowMultiQueries=true
+    username: root
+    password: mysql@zkq12
+    # password: centos@zkq12
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      initial-size: 10
+      min-idle: 5
+      max-active: 20
+      max-wait: 60000
+      time-between-eviction-runs-millis: 60000
+      min-evictable-idle-time-millis: 300000
+      validation-query: SELECT 1 FROM DUAL
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+      pool-prepared-statements: true
+      max-pool-prepared-statement-per-connection-size: 20
+      filters: stat,wall,log4j
+      connection-properties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+  servlet:
+    # 上传文件的大小
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 15MB
+      enabled: true
+  # 静态资源文件夹配置
+  web:
+    resources:
+      static-locations: classpath:/static/
+  # 邮件配置
+  mail:
+    default-encoding: utf-8
+    protocol: smtps
+    port: 465
+    host: smtp.qq.com
+    password: eiwbscoomtyyccfh
+    username: 2031449330@qq.com
+    properties:
+      mail:
+        smtps:
+          ssl:
+            enable: true
+
+
+# 自定义配置
+trading-sys:
+  charset:
+    lower: qwertyuioplkjhgfdsazxcvbnm
+    upper: QWERTYUIOPLKJHGFDSAZXCVBNM
+    digits: 0123456789
+  user:
+    avatar-prefix: /static_resources/images/user/
+    rela-prefix: static/images/user
+    # 验证码
+    vcode:
+      length: 6
+      minutes: 15
+      theme: 验证码
+
+  good:
+    image-prefix: /static_resources/images/good/
+    rela-prefix: static/images/good
+    categroies: all, food, clothes, book, other
+
+  image:
+    # 图片的最大值（MB）
+    max-size: 2
+    # 允许的图片类型
+    types: image/jpeg, image/png, image/bmp, image/webp
+
+
+# jwt配置
+jwt:
+  token:
+    expiration: 168
+    key: trading1system2is3great4
