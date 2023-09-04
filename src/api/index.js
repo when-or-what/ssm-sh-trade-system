@@ -30,8 +30,6 @@ const dataProvider = {
     },
     // 商品相关
     good: {
-        // 验证商品名是否可用
-        verifyName: (data) => axios.post(`/good/check_name`, data),
         // 获取商品列表
         getGoods: (data) => axios.post(`/good/s`, data),
         // 获取商品详情
@@ -42,6 +40,8 @@ const dataProvider = {
         update: (data) => axios.put(`/good`, data),
         // 删除商品
         delete: (ids) => axios.delete(`/good`, { params: { id: ids } }),
+        // 增加商品浏览量
+        addViewNum: (data) => axios.put(`/good/view`, data),
         // 上传商品图片: POST `/good/upload`，用于Antd组件上
     },
 };

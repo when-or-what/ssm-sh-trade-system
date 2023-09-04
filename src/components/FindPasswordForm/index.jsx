@@ -63,7 +63,7 @@ const FindPasswordForm = () => {
         const userEmail = form.getFieldValue("userEmail");
         try {
             const data = { userName, userEmail };
-            const res = (await dataProvider.getVcode(data)).data;
+            const res = (await dataProvider.user.getVcode(data)).data;
             if (!res.state) {
                 messageApi.error('发送验证码时发生未知错误');
             } else if (res.state !== OK) {
@@ -87,7 +87,7 @@ const FindPasswordForm = () => {
         const veriCode = form.getFieldValue("vcode");
         try {
             const data = { userName, userEmail, veriCode };
-            const res = (await dataProvider.verifyVcode(data)).data;
+            const res = (await dataProvider.user.verifyVcode(data)).data;
             if (!res.state) {
                 messageApi.error('验证时发生未知错误');
             } else if (res.state !== OK) {
@@ -109,7 +109,7 @@ const FindPasswordForm = () => {
 
         console.log('组装好的数据', data);
         try {
-            const res = (await dataProvider.resetPswd(data)).data;
+            const res = (await dataProvider.user.resetPswd(data)).data;
             if (!res.state) {
                 messageApi.error('重置密码时发生未知错误');
             } else if (res.state !== OK) {

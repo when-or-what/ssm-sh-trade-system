@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -57,10 +57,12 @@ const getMenuItem = (key, icon, label) => ({
 // 左边菜单栏目录
 const items = [
     getMenuItem('all', <AppstoreOutlined />, '全部'),
-    getMenuItem('meat', <FireOutlined />, '荤菜'),
-    getMenuItem('vegetable', <HeartOutlined />, '素菜'),
-    getMenuItem('drink', <SmileOutlined />, '酒水'),
-    getMenuItem('other', <EllipsisOutlined />, '其它')
+    getMenuItem('book', <FireOutlined />, '书本资料'),
+    getMenuItem('device', <HeartOutlined />, '电子设备'),
+    getMenuItem('sport', <SmileOutlined />, '运动器材'),
+    getMenuItem('food', <FireOutlined />, '食物'),
+    getMenuItem('cloth', <HeartOutlined />, '衣服'),
+    getMenuItem('other', <EllipsisOutlined />, '其他'),
 ];
 
 // 页头页脚所用背景色
@@ -81,6 +83,8 @@ const MyLayout = () => {
     const [open, setOpen] = useState(false);
     // 设置当前用户的信息
     const [info, setInfo] = useState({});
+    // 刷新整个界面，以免数据一样
+    const [layoutKey, setLayoutKey] = useState('1');
     // 刷新抽屉，以免数据一样
     const [key, setKey] = useState('1');
     // 当前抽屉处于什么状态（展示用户信息0，修改密码1，修改邮箱2）
@@ -102,7 +106,7 @@ const MyLayout = () => {
                 handleClick();
                 break;
             case 'good-info':
-                // 转到商品信息
+                // 用户的商品信息
                 break;
             case 'exit':
                 // 退出登录
@@ -146,6 +150,14 @@ const MyLayout = () => {
     };
     // 最左边的菜单栏
     const [collapsed, setCollapsed] = useState(false);
+    // 设置获取商品的条件，固定的种类、当前页码、每页大小、用户id、搜索关键词
+    const [conds, setConds] = useState({
+        goodCate: 'all', // 商品种类，默认就是all
+        keyword: null,// 关键词，默认不传,
+        pageNum: 1,// 当前页码，默认为1
+        pageSize: 10,// 每页大小，默认为10
+        userId: null,// 用户id，默认不传
+    });
     // 中间关于商品部分的组件状态，一个对象类型，包含许多变量
     const [state, setState] = useState({
         isLoading: false,
@@ -164,19 +176,22 @@ const MyLayout = () => {
                 messageApi.error('登录过期，请重新登录');
                 // 清除本地缓存
                 storage.remove(USER_INFO);
-                setOpen(false);
+                // 刷新页面
+                setLayoutKey(Math.random().toString());
                 return;
             } else if (res.state !== OK) {
                 messageApi.error(res.message);
                 // 清除本地缓存
                 storage.remove(USER_INFO);
-                setOpen(false);
+                // 刷新页面
+                setLayoutKey(Math.random().toString());
                 return;
             } else if (res.data === null) {
                 messageApi.error('用户不存在');
                 // 清除本地缓存
                 storage.remove(USER_INFO);
-                setOpen(false);
+                // 刷新页面
+                setLayoutKey(Math.random().toString());
                 return;
             } else {
                 // 成功获取到了用户数据
@@ -193,61 +208,62 @@ const MyLayout = () => {
             messageApi.error('登录过期，请重新登录');
             // 清除本地缓存
             storage.remove(USER_INFO);
-            setOpen(false);
+            // 刷新页面
+            setLayoutKey(Math.random().toString());
             return;
         }
         // 然后打开抽屉
         showDrawer();
     };
 
-    // 点击最左边商品类别菜单项的回调函数
-    const callback = async (cate) => {
-        // 发送请求之前，更新状态
-        setState({
-            ...state,
-            isLoading: true
-        });
-        // 发送请求
-        try {
-            const res = (await dataProvider.good.getGoods({
-                goodCate: 'all',
-                pageNum: 1,
-                pageSize: 10,
-            })).data;
-            if (res.state && res.state === OK) {
-                // 请求成功，展示
-                console.log(res.data);
-                setState({
-                    ...state,
-                    isLoading: false,
-                    goods: res.data.data
-                });
-            } else {
-                // 请求未成功
-                console.log(res.message);
-                setState({
-                    ...state,
-                    err: res.message
-                });
-            }
-        } catch (error) {
-            console.log(error);
+    // 生命周期钩子，根据条件获取商品
+    useEffect(() => {
+        async function fetchData(cond) {
+            // 发送请求之前，更新状态
             setState({
                 ...state,
-                err: err.message
+                isLoading: true
             });
+            // 发送请求
+            try {
+                const res = (await dataProvider.good.getGoods(cond)).data;
+                if (res.state && res.state === OK) {
+                    // 请求成功，展示
+                    console.log(res.data);
+                    setState({
+                        ...state,
+                        isLoading: false,
+                        goods: res.data.data
+                    });
+                } else {
+                    // 请求未成功
+                    console.log(res.message);
+                    setState({
+                        ...state,
+                        err: res.message
+                    });
+                }
+            } catch (error) {
+                console.log(error);
+                setState({
+                    ...state,
+                    err: error.message
+                });
+            }
         }
-    };
+        fetchData(conds);
+    }, [conds]);
 
-    // 给菜单项添加回调函数
+    // 给最左边的商品种类菜单项添加回调函数
+    // 只需要改变获取条件即可
     for (let i in items) {
-        items[i].onClick = () => callback(items[i].key === 'all' ? '' : items[i].key);
+        items[i].onClick = () => setConds({ ...conds, goodCate: items[i].key });
     }
 
     const { isLoading, err, goods } = state;
 
     return (
-        <>
+        <Fragment key={layoutKey}>
             {contextHolder}
             <Layout
                 style={{
@@ -350,16 +366,18 @@ const MyLayout = () => {
                                     <Spin size="large" /> :
                                     err !== '' ?
                                         <h2 style={{ color: 'red' }}>{err}</h2> :
-                                        <Row gutter={[16, 8]}>
-                                            {goods.map(goodItem => {
-                                                return (
-                                                    <MyCol
-                                                        good={goodItem}
-                                                        key={goodItem.goodId}
-                                                    />
-                                                );
-                                            })}
-                                        </Row>
+                                        goods.length === 0 ?
+                                            <h2 style={{ color: 'gray' }}>暂时没有商品</h2> :
+                                            <Row gutter={[16, 8]}>
+                                                {goods.map(goodItem => {
+                                                    return (
+                                                        <MyCol
+                                                            good={goodItem}
+                                                            key={goodItem.goodId}
+                                                        />
+                                                    );
+                                                })}
+                                            </Row>
                             }
                         </div>
                     </Content>
@@ -413,7 +431,7 @@ const MyLayout = () => {
                 open={confirmOpen}
                 setOpen={setConfirmOpen}
             />
-        </>
+        </Fragment>
     );
 };
 
@@ -438,7 +456,7 @@ const ConfirmModal = ({ open, setOpen }) => {
             if (open === 2) {
                 try {
                     // 如果是注销的话还要请求接口
-                    const res = (await dataProvider.deleteUser({ id: user.userId })).data;
+                    const res = (await dataProvider.user.delete(user.userId)).data;
 
                     if (!res.state) {
                         message.error('注销用户时发生未知错误');

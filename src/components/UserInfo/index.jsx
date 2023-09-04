@@ -30,6 +30,7 @@ const OK = Number.parseInt(process.env.REACT_APP_OK);
 const INTERVAL = Number.parseInt(process.env.REACT_APP_VER_INTERVAL);
 const VCODE_LENGTH = Number.parseInt(process.env.REACT_APP_VCODE_LENGTH);
 const USER_INFO = process.env.REACT_APP_USER_INFO;
+const IMAGE_PREFIX = process.env.REACT_APP_IMAGE_BASE_URL;
 
 const userInfo = storage.get(USER_INFO);
 
@@ -41,6 +42,10 @@ const UserInfo = ({ info, curState, changeDrawerState }) => {
     const [hasEmail, setHasEmail] = useState(false);
     const [canSubmit, setCanSubmit] = useState(false);
     const [show, setShow] = useState(false);
+    // 头像上传框和用户信息组件的消息交流
+    const [imgPath, setImgPath] = useState('');
+    const setUserAvatarPath = (imgpath) => (setImgPath(imgpath));
+
     // 加载验证码
     const [isLoading, setIsLoading] = useState(false);
     // 按钮上显示的秒数
@@ -61,11 +66,11 @@ const UserInfo = ({ info, curState, changeDrawerState }) => {
 
     // 修改用户基本信息的表单提交
     const handleFinish = async (values) => {
-        console.log('接收到的数据为', values);
-        const data = { ...values, id: info.id };
+        const data = { ...values, userId: info.userId, userAvatar: imgPath };
+        console.log('组装好的数据为', data);
         // 直接使用接口修改即可
         try {
-            const res = (await dataProvider.updateUserInfo(data)).data;
+            const res = (await dataProvider.user.updateInfo(data)).data;
             if (!res.state) {
                 messageApi.open({
                     type: 'error',
@@ -97,8 +102,8 @@ const UserInfo = ({ info, curState, changeDrawerState }) => {
         console.log('接收到的数据为', values);
         try {
             const { oldPassword, newPassword } = values;
-            const res = (await dataProvider.updateUserPassword({
-                id: info.id, oldPassword, newPassword
+            const res = (await dataProvider.user.updatePswd({
+                id: info.userId, oldPassword, newPassword
             })).data;
             console.log('修改之后得到的结果', res);
             if (!res.state) {
@@ -134,7 +139,7 @@ const UserInfo = ({ info, curState, changeDrawerState }) => {
         const userEmail = form.getFieldValue("oldEmail");
         try {
             const data = { userName, userEmail };
-            const res = (await dataProvider.getVcode(data)).data;
+            const res = (await dataProvider.user.getVcode(data)).data;
             if (!res.state) {
                 messageApi.error('发送验证码时发生未知错误');
             } else if (res.state !== OK) {
@@ -158,7 +163,7 @@ const UserInfo = ({ info, curState, changeDrawerState }) => {
         const veriCode = form.getFieldValue("vcode");
         try {
             const data = { userName, userEmail, veriCode };
-            const res = (await dataProvider.verifyVcode(data)).data;
+            const res = (await dataProvider.user.verifyVcode(data)).data;
             if (!res.state) {
                 messageApi.error('验证时发生未知错误');
             } else if (res.state !== OK) {
@@ -176,11 +181,11 @@ const UserInfo = ({ info, curState, changeDrawerState }) => {
     // 修改邮箱的表单提交
     const handleEmailSubmit = async (values) => {
         const { oldEmail, newEmail } = values;
-        const data = { id: userInfo.id, oldEmail, newEmail };
+        const data = { id: userInfo.userId, oldEmail, newEmail };
 
         console.log('组装好的数据', data);
         try {
-            const res = (await dataProvider.updateUserEmail(data)).data;
+            const res = (await dataProvider.user.updateEmail(data)).data;
             if (!res.state) {
                 messageApi.error('修改邮箱时发生未知错误');
             } else if (res.state !== OK) {
@@ -216,7 +221,12 @@ const UserInfo = ({ info, curState, changeDrawerState }) => {
                                 justifyContent: 'center',
                             }}
                         >
-                            <UploadAvatar readOnly={readOnly} uid={info.id} avatar={info.userAvatar} />
+                            {/* 头像上传组件 */}
+                            <UploadAvatar
+                                readOnly={readOnly}
+                                avatar={IMAGE_PREFIX + info.userAvatar}
+                                setUserAvatarPath={setUserAvatarPath}
+                            />
                         </div>
                         <div
                             style={{
@@ -235,8 +245,12 @@ const UserInfo = ({ info, curState, changeDrawerState }) => {
                                     label="用户名"
                                     rules={[
                                         ({ getFieldValue }) => ({
-                                            validator(rule, value) {
+                                            async validator(rule, value) {
                                                 if (formValidator.usernameValid(value)) {
+                                                    const res = (await dataProvider.user.verifyName(value)).data;
+                                                    if (value !== info.userName && !res.data) {
+                                                        return Promise.reject('用户名已被占用');
+                                                    }
                                                     return Promise.resolve();
                                                 }
                                                 return Promise.reject('用户名必须是2-12位由中文、英文、数字、下划线(_)组成的字符串');
@@ -616,7 +630,7 @@ const beforeUpload = (file) => {
 /**
  * 用户头像上传组件
  */
-const UploadAvatar = ({ readOnly, uid, avatar }) => {
+const UploadAvatar = ({ readOnly, avatar, setUserAvatarPath }) => {
     const [imageUrl, setImageUrl] = useState(avatar);
 
     useEffect(() => {
@@ -641,6 +655,8 @@ const UploadAvatar = ({ readOnly, uid, avatar }) => {
             if (res.state && res.state === OK) {
                 // 上传图片成功
                 console.log('头像上传成功');
+                // 改变头像路径状态
+                setUserAvatarPath(res.data);
                 message.success('修改头像成功');
             } else {
                 console.log('头像上传失败');
@@ -658,7 +674,7 @@ const UploadAvatar = ({ readOnly, uid, avatar }) => {
             listType="picture-circle"
             className="avatar-uploader"
             showUploadList={false}
-            action={`/user/upload/${uid}`}
+            action={`/user/upload`}
             beforeUpload={beforeUpload}
             onChange={handleChange}
             disabled={readOnly}

@@ -57,8 +57,10 @@ const SignForm = ({ flag }) => {
                 } else {
                     // 登录成功，保存个人信息在本地，然后跳到主页
                     // 保存的用户信息只需要可公开的字段即可
+                    console.log('response data', response.data);
                     const { userId, userName, userContact, userRemark, userAvatar } = response.data;
                     const user = { userId, userName, userContact, userRemark, userAvatar };
+                    console.log('user', user);
                     storage.set(userInfo, user);
                     navigate('/', { replace: true });
                 }
@@ -139,8 +141,15 @@ const SignForm = ({ flag }) => {
                             message: '请输入用户名！',
                         },
                         ({ getFieldValue }) => ({
-                            validator(rule, value) {
+                            async validator(rule, value) {
                                 if (formValidator.usernameValid(value)) {
+                                    if (!flag) {
+                                        // 仅在注册的时候才提示
+                                        const res = (await dataProvider.user.verifyName(value)).data;
+                                        if (!res.data) {
+                                            return Promise.reject('用户名已被占用');
+                                        }
+                                    }
                                     return Promise.resolve();
                                 }
                                 return Promise.reject('用户名必须是2-12位由中文、英文、数字、下划线(_)组成的字符串');
