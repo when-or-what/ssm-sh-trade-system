@@ -2,6 +2,8 @@ import { Navigate } from 'react-router-dom';
 import Sign from '../pages/Sign';
 import MyLayout from '../pages/MyLayout';
 import FindPassword from '../pages/FindPassword';
+import AddGood from '../components/AddGood';
+import MyGoods from '../pages/MyGoods';
 
 const routers = [
     {
@@ -16,13 +18,26 @@ const routers = [
         path: '/find-password',
         element: <FindPassword />
     },
-    // {
-    //     path: '/',
-    //     element: <Navigate to="/sign-in" />
-    // },
     {
         path: '/',
+        element: <Navigate to="/all" />
+    },
+    // 商品种类的路由
+    {
+        path: '/:cate',
         element: <MyLayout />
+    },
+    // 我的商品
+    {
+        path: '/my-good',
+        element: <MyGoods />,
+        children: [
+            // 添加商品
+            {
+                path: './add',
+                element: <AddGood />,
+            }
+        ]
     },
 ];
 

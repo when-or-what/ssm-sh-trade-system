@@ -44,6 +44,7 @@ const UserInfo = ({ info, curState, changeDrawerState }) => {
     const [show, setShow] = useState(false);
     // 头像上传框和用户信息组件的消息交流
     const [imgPath, setImgPath] = useState('');
+    // 这是伸到头像上传组件里的手
     const setUserAvatarPath = (imgpath) => (setImgPath(imgpath));
 
     // 加载验证码
@@ -67,6 +68,10 @@ const UserInfo = ({ info, curState, changeDrawerState }) => {
     // 修改用户基本信息的表单提交
     const handleFinish = async (values) => {
         const data = { ...values, userId: info.userId, userAvatar: imgPath };
+        // 如果头像路径为空串，则置为空，不让它更新
+        if (data.userAvatar === "") {
+            data["userAvatar"] = null;
+        }
         console.log('组装好的数据为', data);
         // 直接使用接口修改即可
         try {

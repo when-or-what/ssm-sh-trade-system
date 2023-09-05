@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Fragment } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import {
     HeartOutlined,
@@ -18,8 +18,6 @@ import {
     Layout,
     Menu,
     Button,
-    Row,
-    Spin,
     Input,
     Pagination,
     Drawer,
@@ -28,15 +26,16 @@ import {
     Modal,
 } from 'antd';
 
-import MyCol from '../../components/MyCol';
+
 import UserInfo from '../../components/UserInfo';
 
 import dataProvider from '../../api';
 import storage from '../../utils/storage';
 
 import './index.css';
+import MyContent from '../../components/MyContent';
 
-const { Header, Content, Footer, Sider } = Layout;
+const { Header, Footer, Sider } = Layout;
 const { Search } = Input;
 
 // 浏览器本地用户信息变量名
@@ -92,6 +91,17 @@ const MyLayout = () => {
     const changeDrawerState = (state) => setDrawerState(state);
     // 确认对话框的状态(有退出登录和注销两种，0代表对话框关闭，1代表以退出登录的状态打开，2代表以注销的状态打开)
     const [confirmOpen, setConfirmOpen] = useState(0);
+    // 获得当前路径参数
+    const { cate } = useParams();
+    // 商品分页相关
+    const [pageInfo, setPageInfo] = useState({
+        curPage: 1, // 当前页码
+        pageSize: 10, // 每页大小
+        total: 100, // 总条数
+    });
+    // 伸到内容组件里的手
+    const changePageInfo = (pageInfo) => setPageInfo(pageInfo);
+
     // 设置按钮下拉菜单菜单项的点击事件
     const handleMenuClick = (e) => {
         const key = e.key;
@@ -107,6 +117,7 @@ const MyLayout = () => {
                 break;
             case 'good-info':
                 // 用户的商品信息
+                navigate('/my-good');
                 break;
             case 'exit':
                 // 退出登录
@@ -125,11 +136,11 @@ const MyLayout = () => {
     // 设置菜单的菜单项
     const dropdownMenuItems = [
         userInfo && userInfo.userId ?
-            getMenuItem('user-info', <UserOutlined />, '用户信息') :
+            getMenuItem('user-info', <UserOutlined />, '我的信息') :
             getMenuItem('user-sign', <UserOutlined />, '登录'),
-        userInfo && userInfo.userId ? getMenuItem('good-info', <GoldOutlined />, '商品信息') : null,
+        userInfo && userInfo.userId ? getMenuItem('good-info', <GoldOutlined />, '我的商品') : null,
         userInfo && userInfo.userId ? getMenuItem('exit', <PoweroffOutlined />, '退出登录') : null,
-        userInfo && userInfo.userId ? getMenuItem('logout', <UserDeleteOutlined />, '注销用户') : null,
+        userInfo && userInfo.userId ? getMenuItem('logout', <UserDeleteOutlined />, '注销') : null,
     ];
     // 设置右上角下拉菜单的
     const menuProps = {
@@ -150,20 +161,8 @@ const MyLayout = () => {
     };
     // 最左边的菜单栏
     const [collapsed, setCollapsed] = useState(false);
-    // 设置获取商品的条件，固定的种类、当前页码、每页大小、用户id、搜索关键词
-    const [conds, setConds] = useState({
-        goodCate: 'all', // 商品种类，默认就是all
-        keyword: null,// 关键词，默认不传,
-        pageNum: 1,// 当前页码，默认为1
-        pageSize: 10,// 每页大小，默认为10
-        userId: null,// 用户id，默认不传
-    });
-    // 中间关于商品部分的组件状态，一个对象类型，包含许多变量
-    const [state, setState] = useState({
-        isLoading: false,
-        err: '',
-        goods: []
-    });
+    // 设置获取商品的条件，固定的种类、当前页码、每页大小、搜索关键词
+    const [conds, setConds] = useState({});
 
     // 用户信息抽屉按钮点击事件
     // 能点击到这个按钮，说明本地肯定是有用户信息的
@@ -216,51 +215,23 @@ const MyLayout = () => {
         showDrawer();
     };
 
-    // 生命周期钩子，根据条件获取商品
     useEffect(() => {
-        async function fetchData(cond) {
-            // 发送请求之前，更新状态
-            setState({
-                ...state,
-                isLoading: true
-            });
-            // 发送请求
-            try {
-                const res = (await dataProvider.good.getGoods(cond)).data;
-                if (res.state && res.state === OK) {
-                    // 请求成功，展示
-                    console.log(res.data);
-                    setState({
-                        ...state,
-                        isLoading: false,
-                        goods: res.data.data
-                    });
-                } else {
-                    // 请求未成功
-                    console.log(res.message);
-                    setState({
-                        ...state,
-                        err: res.message
-                    });
-                }
-            } catch (error) {
-                console.log(error);
-                setState({
-                    ...state,
-                    err: error.message
-                });
-            }
-        }
-        fetchData(conds);
-    }, [conds]);
+        setConds({
+            goodCate: cate === 'all' ? null : cate, // 商品种类，默认不传
+            keyword: null,// 关键词，默认不传,
+            pageNum: 1,// 当前页码，默认为1
+            pageSize: 10,// 每页大小，默认为10
+        });
+    }, [cate]);
 
     // 给最左边的商品种类菜单项添加回调函数
     // 只需要改变获取条件即可
+    // 注意，当选项为全部时，要将选择条件的种类改为null
     for (let i in items) {
-        items[i].onClick = () => setConds({ ...conds, goodCate: items[i].key });
+        items[i].onClick = () => {
+            navigate(`/${items[i].key}`, { replace: true });
+        }
     }
-
-    const { isLoading, err, goods } = state;
 
     return (
         <Fragment key={layoutKey}>
@@ -279,7 +250,7 @@ const MyLayout = () => {
                 >
                     <Menu
                         theme="dark"
-                        defaultSelectedKeys={'all'}
+                        defaultSelectedKeys={cate}
                         mode="inline"
                         items={items}
                         style={{
@@ -327,60 +298,26 @@ const MyLayout = () => {
                                 />
                             </Dropdown>
                         </div>
-
                     </Header>
-                    {/* 中间展示区主体部分 */}
-                    <Content
+
+                    {/* 搜索框 */}
+                    <div
                         style={{
-                            margin: '10px 7px 0px 0px'
+                            width: '30%',
+                            margin: '14px auto'
                         }}
                     >
-                        <div
-                            style={{
-                                width: '30%',
-                                margin: '0 auto',
-                                padding: '0 0 8px 0'
-                            }}
-                        >
-                            <Search
-                                placeholder="输入商品名搜索"
-                                allowClear
-                                enterButton
-                                size="middle"
-                            // onSearch={onSearch}
-                            />
-                        </div>
+                        <Search
+                            placeholder="输入商品名搜索"
+                            allowClear
+                            enterButton
+                            size="middle"
+                            onSearch={(value) => setConds({ ...conds, keyword: value })}
+                        />
+                    </div>
 
-                        <div
-                            style={{
-                                padding: '10px',
-                                height: '80vh',
-                                backgroundColor: mainBgColor,
-                                fontSize: '16px',
-                                overflowY: 'scroll'
-                            }}
-                        >
-                            {/* 这里是商品展示区，放置商品卡片列表 */}
-                            {
-                                isLoading ?
-                                    <Spin size="large" /> :
-                                    err !== '' ?
-                                        <h2 style={{ color: 'red' }}>{err}</h2> :
-                                        goods.length === 0 ?
-                                            <h2 style={{ color: 'gray' }}>暂时没有商品</h2> :
-                                            <Row gutter={[16, 8]}>
-                                                {goods.map(goodItem => {
-                                                    return (
-                                                        <MyCol
-                                                            good={goodItem}
-                                                            key={goodItem.goodId}
-                                                        />
-                                                    );
-                                                })}
-                                            </Row>
-                            }
-                        </div>
-                    </Content>
+                    {/* 中间展示区主体部分 */}
+                    <MyContent filter={conds} changePageInfo={changePageInfo} />
 
                     {/* 页脚部分 */}
                     <Footer
@@ -393,11 +330,12 @@ const MyLayout = () => {
                             padding: '0 30px 0 0'
                         }}
                     >
-
                         <Pagination
-                            total={100522}
+                            total={pageInfo.total}
+                            pageSize={pageInfo.pageSize}
+                            current={pageInfo.curPage}
+                            onChange={(pageNum, pageSize) => setConds({ ...conds, pageNum, pageSize })}
                             showSizeChanger
-                            showQuickJumper
                             showTotal={(total) => `共 ${total} 条`}
                             size="small"
                         />
