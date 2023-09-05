@@ -70,7 +70,9 @@
         ON tg.good_id = tm.good_id
         WHERE tg.is_deleted = 0
         AND tm.is_deleted = 0
-        AND good_cate = #{goodVo.goodCate}
+        <if test="goodVo.goodCate != null and goodVo.goodCate.length() > 0">
+            AND good_cate = #{goodVo.goodCate}
+        </if>
         <if test="goodVo.keyword != null and goodVo.keyword.length() > 0">
             AND good_name LIKE CONCAT('%',#{goodVo.keyword},'%')
         </if>
@@ -84,7 +86,9 @@
         SELECT COUNT(*)
         FROM t_goods
         WHERE is_deleted = 0
-        AND good_cate = #{goodVo.goodCate}
+        <if test="goodVo.goodCate != null and goodVo.goodCate.length() > 0">
+            AND good_cate = #{goodVo.goodCate}
+        </if>
         <if test="goodVo.keyword != null and goodVo.keyword.length() > 0">
             AND good_name LIKE CONCAT('%',#{goodVo.keyword},'%')
         </if>
